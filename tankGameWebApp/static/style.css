@@ -1,0 +1,13 @@
+body{
+    background-color: powderblue;
+    color: yellow;
+
+}
+
+ h1{ 
+    font-family: Impact, sans-serif;
+    text-align: center;
+ font-size: 100px; 
+    color:red;
+    letter-spacing:6px;
+  }  

@@ -2,23 +2,26 @@ from sense_hat import SenseHat, ACTION_PRESSED
 from time import sleep
 import random
 from random import randint
+import dbconnection
+import os
 
 sense = SenseHat()
-sense.set_rotation(180)
+
 sense.low_light = True
 
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
 WHITE = (255,255,255)
-
+score = 0
 x = 4
 
 bullet_frame = 1
 bullet = False
 
 ticks = 0
-tick_state = 100
+tick_state = 70
+loading = 0
 
 matrix = [[BLUE for column in range(8)] for row in range(8)]
 
@@ -27,7 +30,7 @@ def flatten(matrix):
     flattened = [pixel for row in matrix for pixel in row]
     return flattened
 
-def gen_pipes(matrix):
+def gen_asteroids(matrix):
     for row in matrix:
         row[-1] = BLUE
     set_of_enemies = (random.sample(range(0,8),random.randint(1,4)))
@@ -35,7 +38,7 @@ def gen_pipes(matrix):
         matrix[d][-1] = RED
     return matrix
 
-def move_pipes(matrix):
+def move_asteroids(matrix):
     for row in matrix:
         for i in range(7):
             row[i] = row[i + 1]
@@ -85,15 +88,18 @@ def draw_tank(x):
 def bullet_trajectory(matrix):
     global bullet
     global bullet_x
+    global score
     if bullet == True:
         global bullet_frame
         bullet_frame += 1
-        print(bullet_frame)
         if matrix[bullet_x][bullet_frame-1] != RED and bullet_frame < 8:
             sense.set_pixel( bullet_frame,bullet_x, WHITE)
             sense.set_pixel( bullet_frame-1,bullet_x, BLUE)
                 
         else:
+            if matrix[bullet_x][bullet_frame-1] == RED :
+                score += 1
+                print ("score: ",score)
             sense.set_pixel( bullet_frame-1,bullet_x, BLUE)
             matrix[bullet_x][bullet_frame-1] = BLUE           
             bullet = False 
@@ -108,9 +114,13 @@ def shoot(event):
         bullet_x = x
 
 def layer_collistion(matrix):
+    global score
     for row in matrix:
         if row[1] != BLUE:
-            sense.show_message("NAAH")
+            sense.set_rotation(270)
+            sense.show_message("TANK DESTROYED")
+            dbconnection.establishConnection(int(score))
+            os.system('/usr/bin/python3 /home/pi/tanks/tankGameWebApp/tankGameWeb.py')
             quit()
 
 
@@ -118,8 +128,14 @@ def layer_collistion(matrix):
 sense.stick.direction_middle = shoot
 sense.stick.direction_any = draw_astronaut
 
+sense.set_rotation(270)
+
+sense.show_message("SPACE TANKS")
+
+sense.set_rotation(180)
+
 sense.set_pixels(flatten(matrix))
-matrix = gen_pipes(matrix)
+matrix = gen_asteroids(matrix)
 
 while True:
     draw_tank(x)
@@ -128,13 +144,13 @@ while True:
     ticks += 5
     if ticks == (tick_state):
         bullet_trajectory(matrix)
-        tick_state -= 5
-        matrix = move_pipes(matrix)
-        matrix = gen_pipes(matrix)
+        loading += 1
+        if loading == 5:
+            tick_state -= 5
+            loading = 0
+        matrix = move_asteroids(matrix)
+        matrix = gen_asteroids(matrix)
         sense.set_pixels(flatten(matrix))
         ticks = 0
         if layer_collistion(matrix):
-            break
-       
-
-sense.show_message("NAAH")
+            break 

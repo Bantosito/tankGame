@@ -2,7 +2,8 @@ from sense_hat import SenseHat, ACTION_PRESSED
 from time import sleep
 import random
 from random import randint
-
+import dbconnection
+from tankGameWebApp import tankGameWeb
 sense = SenseHat()
 
 sense.low_light = True
@@ -33,7 +34,7 @@ def gen_pipes(matrix):
         row[-1] = BLUE
     set_of_enemies = (random.sample(range(0,8),random.randint(1,4)))
     for d in set_of_enemies:
-        matrix[d][-1] = RED
+        matrix[d][-1] = WHITE
     return matrix
 
 def move_pipes(matrix):
@@ -91,9 +92,9 @@ def bullet_trajectory(matrix):
         bullet_frame += 1
         print(bullet_frame)
         if bullet_frame <= 7:
-            sense.set_pixel( bullet_frame,bullet_x, WHITE)
+            sense.set_pixel( bullet_frame,bullet_x, RED)
             sense.set_pixel( bullet_frame-1,bullet_x, BLUE)
-            if matrix[bullet_x][bullet_frame-1] == RED:
+            if matrix[bullet_x][bullet_frame-1] == WHITE:
                 matrix[bullet_x][bullet_frame-1] = BLUE
                 return matrix
                 
@@ -131,6 +132,7 @@ while True:
     ticks += 5
     #print(ticks) 
     if ticks == (tick_state):
+        print (dbconnection.establishConnection())
         tick_state -= 5
         matrix = move_pipes(matrix)
         matrix = gen_pipes(matrix)
@@ -141,3 +143,5 @@ while True:
        
 
 sense.show_message("NAAH")
+
+tankGameWeb()
